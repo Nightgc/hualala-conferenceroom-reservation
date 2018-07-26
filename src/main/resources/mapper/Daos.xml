@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hualala.conference.dao.Daos">
+
+    <resultMap id="listMap" type="com.hualala.conference.bean.ConferenceRoom">
+        <id column="conference_room_id" property="conferenceRoomId"/>
+        <result column="conference_room_name" property="conferenceRoomName"/>
+        <result column="conference_room_position" property="conferenceRoomPosition"/>
+        <result column="seat_number" property="seatNumber"/>
+        <result column="is_have_projection" property="haveProjection"/>
+        <result column="is_have_whiteboard" property="haveWhiteBoard"/>
+    </resultMap>
+    <select id="list" resultMap="listMap">
+        select * from conference_room limit #{offset},#{pageSize};
+    </select>
+
+    <select id="getConferenceRoomById" resultMap="listMap">
+        select * from conference_room
+        where conference_room_id =#{id};
+    </select>
+
+    <delete id="deleteConferenceRoomById">
+        delete from conference_room
+        where conference_room_id =#{id};
+    </delete>
+
+    <insert id="insertConferenceRoom">
+        insert into conference_room
+        (conference_room_name,conference_room_position,seat_number,is_have_projection,is_have_whiteboard)
+        values (#{conferenceRoom.conferenceRoomName},
+        #{conferenceRoom.conferenceRoomPosition},
+        #{conferenceRoom.seatNumber},
+        #{conferenceRoom.haveProjection},
+        #{conferenceRoom.haveWhiteBoard});
+    </insert>
+
+    <update id="updateConferenceRoom">
+        update conference_room
+        set conference_room_name=#{conferenceRoom.conferenceRoomName},
+        conference_room_position=#{conferenceRoom.conferenceRoomPosition},
+        seat_number=#{conferenceRoom.seatNumber},
+        is_have_projection=#{conferenceRoom.haveProjection},
+        is_have_whiteBoard=#{conferenceRoom.haveWhiteBoard}
+        where conference_room_id=#{conferenceRoom.conferenceRoomId};
+    </update>
+
+
+    <select id="selectRoomByCondition"  resultMap="listMap">
+        SELECT * FROM conference_room
+        WHERE 1=1
+        <if test="conferenceRoomPosition != null">AND conference_room_position = #{conferenceRoomPosition}</if>
+        <if test="haveProjection != null">AND is_have_projection = #{haveProjection}</if>
+        <if test="seatNumber != null">
+            <choose>
+                <when test="option==1">
+                    AND seat_number &lt; #{seatNumber}
+                </when>
+                <when test="option==2">
+                    AND seat_number = #{seatNumber}
+                </when>
+                <otherwise>
+                    AND seat_number >= #{seatNumber}
+                </otherwise>
+            </choose>
+        </if>
+        <if test="haveWhiteBoard != null">AND is_have_whiteBoard = #{haveWhiteBoard}</if>
+    </select>
+
+    <resultMap id="Map" type="com.hualala.conference.bean.Reservation">
+        <id column="reservation_id" property="reservationId" />
+        <result column="start_time" property="startTime" />
+        <result column="stop_time" property="stopTime" />
+        <result column="conference_room_id" property="conferenceRoomId"/>
+        <result column="employee_name" property="employeeName"/>
+
+    </resultMap>
+
+    <insert id="insertReservation">
+        insert into reservation
+        (start_time,stop_time,conference_room_id,employee_name)
+        values (#{reservation.startTime},
+        #{reservation.stopTime},
+        #{reservation.conferenceRoomId},
+        #{reservation.employeeName});
+    </insert>
+
+    <delete id="deleteReservation">
+        delete from reservation
+        where employee_name =#{name};
+    </delete>
+
+    <select id="selectReservationById" resultMap="Map">
+            select * from reservation
+            where reservation_id =#{id};
+    </select>
+
+    <select id="selectReservationByRoom" resultMap="Map">
+        select * from reservation
+        where conference_room_id =#{roomId};
+    </select>
+
+    <update id="updateReservation">
+        update reservation
+        set start_time=#{reservation.startTime},
+        stop_time=#{reservation.stopTime},
+        employee_name=#{reservation.employeeName},
+        conference_room_id=#{reservation.conferenceRoomId}
+        where reservation_id=#{reservation.reservationId};
+    </update>
+
+
+    <resultMap id="reservationMap" type="com.hualala.conference.bean.Reservation">
+        <id column="reservation_id" property="reservationId" />
+        <result column="start_time" property="startTime" />
+        <result column="stop_time" property="stopTime" />
+        <result column="conference_room_id" property="conferenceRoomId"/>
+        <result column="employee_name" property="employeeName"/>
+        <association property="conferenceRoom" javaType="com.hualala.conference.bean.ConferenceRoom">
+            <id column="conference_room_id" property="conferenceRoomId"/>
+            <result column="conference_room_name" property="conferenceRoomName"/>
+            <result column="conference_room_position" property="conferenceRoomPosition"/>
+            <result column="seat_number" property="seatNumber"/>
+            <result column="is_have_projection" property="haveProjection"/>
+            <result column="is_have_whiteboard" property="haveWhiteBoard"/>
+        </association>
+    </resultMap>
+
+    <select id="getRoom" resultMap="reservationMap">
+        select * from conference_room a,reservation b
+        where a.conference_room_id = b.conference_room_id and b.conference_room_id=#{id};
+    </select>
+
+    <select id="selectCanUseRoom" resultType="int">
+        SELECT conference_room_id FROM conference_room
+        WHERE conference_room_id
+        not in (SELECT conference_room_id FROM reservation
+        WHERE start_time <![CDATA[  >=  ]]>#{startTime} AND start_time <![CDATA[   <=  ]]>#{stopTime}
+        OR stop_time <![CDATA[  >=  ]]> #{startTime} AND stop_time <![CDATA[   <=  ]]> #{stopTime}
+        OR start_time <![CDATA[  >=  ]]> #{startTime} AND stop_time <![CDATA[   <=  ]]> #{stopTime}
+        OR start_time <![CDATA[  <=  ]]> #{startTime} AND stop_time <![CDATA[  >=  ]]> #{stopTime})
+    </select>
+
+    <delete id="deleteReservationById">
+        delete from reservation
+        where reservation_id =#{id};
+    </delete>
+
+    <select id="selectConferenceRoom" resultType="int">
+       SELECT conference_room_id FROM reservation;
+    </select>
+
+    <select id="selectConferenceIdInConferenceRoom" resultType="int">
+        SELECT conference_room_id FROM conference_room;
+    </select>
+
+
+    <select id="selectReservationIdInReservation" resultType="int">
+        select reservation_id from reservation;
+    </select>
+
+    <select id="selectEmployeeNameInReservation" resultType="String">
+        select employee_name from reservation;
+    </select>
+
+    <select id="selectConferenceRoomNameInConferenceRoom" resultType="String">
+        select conference_room_name from conference_room;
+    </select>
+
+    <select id="selectStartTimeInReservation" resultType="Long">
+        select start_time from reservation where employee_name = #{name};
+    </select>
+
+    <insert id="insert100w">
+
+        insert into reservation(start_time,stop_time,conference_room_id,employee_name)
+        values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (#{item.startTime}, #{item.stopTime},#{item.conferenceRoomId},#{item.employeeName})
+        </foreach>
+
+    </insert>
+
+    <select id="selectReservationByTime" resultType="Map">
+        select * from reservation where start_time=#{startTime} and stop_time = #{stopTime}
+    </select>
+</mapper>
