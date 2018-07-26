@@ -84,6 +84,7 @@ public class ReservationServicesImpl implements ReservationServices {
     @Override
     public Reservation selectReservationById(Long id) {
 
+        System.out.println();
         if (!dao.selectReservationIdInReservation().contains(id)){
             throw new RuntimeException("预约表中没有与该id对应的预约信息，无法查询预约");
         }
