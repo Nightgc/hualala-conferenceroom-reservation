@@ -111,6 +111,7 @@ public class ReservationServicesImpl implements ReservationServices {
     @Override
     public List<Reservation> getRoom(Integer id) {
 
+        System.out.println();
         if(!dao.selectConferenceRoom().contains(id)){
             throw new RuntimeException("对不起，预约表中没有对应的Id");
         }
